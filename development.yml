@@ -1,0 +1,18 @@
+version: "3.6"
+
+services:
+  camera:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: camera_v1.0
+    env_file:
+      - ./env/api.env
+    environment:
+      - VUE_APP_API_URL=http://rest.cameramanager.com/rest/v2.4
+      - VUE_APP_LOGIN_URL=http://rest.cameramanager.com/oauth/token
+    ports:
+      - "3000:8080"
+    volumes:
+      - ./:/app/.
+      - /app/node_modules
