@@ -35,7 +35,7 @@
           label="Password"
           type="password"
           :error-messages="errorMessages.password"
-          @keyup.enter="login"
+          @keyup.enter="loginUser"
         ></v-text-field>
       </v-form>
     </v-card-text>
