@@ -11,6 +11,7 @@
   "dependencies": {
     "axios": "^0.24.0",
     "core-js": "^3.6.5",
+    "secure-ls": "^1.2.6",
     "vue": "^2.6.11",
     "vue-router": "^3.2.0",
     "vuetify": "^2.4.0",
@@ -32,6 +33,7 @@
     "sass-loader": "^10.0.0",
     "vue-cli-plugin-vuetify": "~2.4.4",
     "vue-template-compiler": "^2.6.11",
-    "vuetify-loader": "^1.7.0"
+    "vuetify-loader": "^1.7.0",
+    "vuex-persistedstate": "^4.1.0"
   }
 }
