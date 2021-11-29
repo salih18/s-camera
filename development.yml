@@ -7,6 +7,7 @@ services:
       dockerfile: Dockerfile
     image: camera_v1.0
     env_file:
+      - ./env/API.env
       - ./env/api.env
     environment:
       - VUE_APP_API_URL=http://rest.cameramanager.com/rest/v2.4
