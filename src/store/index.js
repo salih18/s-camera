@@ -19,31 +19,58 @@ const API_SECRET = process.env.VUE_APP_API_SECRET;
 
 export default new Vuex.Store({
   state: {
-    user: {
+    auth: {
       session: null,
       isAuthenticated: false,
+      user: null,
+      error: null,
+    },
+    cameras: {
       data: null,
     },
   },
   mutations: {
     loadUser(state, payload) {
-      state.user = {
-        ...state.user,
-        data: payload,
+      state.auth = {
+        ...state.auth,
+        user: payload,
+        error: null,
       };
     },
-    setSession(state, payload) {
-      state.user = {
-        ...state.user,
+    login(state, payload) {
+      state.auth = {
+        ...state.auth,
         isAuthenticated: true,
         session: payload,
+        error: null,
       };
     },
     logout(state) {
-      state.user = {
+      state.auth = {
         session: null,
         isAuthenticated: false,
-        data: null,
+        user: null,
+        error: null,
+      };
+      state.cameras.data = null;
+    },
+    getAccountCameras(state, payload) {
+      state.cameras = {
+        data: payload,
+      };
+    },
+    getAccountCameraSnapshot(state, payload) {
+      const camera = state.cameras.data.find(
+        (camera) => camera.cameraId === payload.cameraId
+      );
+      camera["snapshot"] = `data:image/jpeg;base64,${payload.snapshot}`;
+    },
+    setErrorLogin(state, payload) {
+      state.auth = {
+        error: payload,
+        isAuthenticated: false,
+        session: null,
+        user: null,
       };
     },
   },
@@ -61,12 +88,12 @@ export default new Vuex.Store({
 
       try {
         const res = await axios(options);
-        commit("setSession", res.data);
+        commit("login", res.data);
         await dispatch("loadUser");
         router.push({ path: "dashboard" });
       } catch (error) {
-        console.log("Error on login", error);
-        commit("setSession", null);
+        console.log("Error on login", { error });
+        commit("setErrorLogin", error.response?.data?.error_description);
       }
     },
     async loadUser({ commit }) {
@@ -77,13 +104,44 @@ export default new Vuex.Store({
         console.log("Error load user", error);
       }
     },
+    async getAccountCameras({ commit }) {
+      try {
+        const cameras = await api.get(`${API_URL}/cameras`);
+        commit("getAccountCameras", cameras.data);
+      } catch (error) {
+        console.log("Error getting account cameras", error);
+      }
+    },
+    async getAccountCameraSnapshot({ commit }, id) {
+      // https://rest.cameramanager.com/rest/v2.4/cameras/1841837/snapshot?resolution=1000x100
+      try {
+        const snapshot = await api.get(
+          `${API_URL}/cameras/${id}/snapshot?resolution=1000x100`,
+          {
+            responseType: "arraybuffer",
+          }
+        );
+
+        const payload = {
+          snapshot: Buffer.from(snapshot.data, "binary").toString("base64"),
+          cameraId: id,
+        };
+        console.log(
+          "🚀 ~ file: index.js ~ line 116 ~ getAccountCameraSnapshot ~ payload",
+          payload
+        );
+        commit("getAccountCameraSnapshot", payload);
+      } catch (error) {
+        console.log("Error getting account cameras", error);
+      }
+    },
   },
   getters: {
-    getLoginStatus(state) {
-      return state.loginStatus;
-    },
     getSession(state) {
-      return state.user.session;
+      return state.auth.session;
+    },
+    getAccountCameras(state) {
+      return state.cameras.data;
     },
   },
   plugins: [

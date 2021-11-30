@@ -9,13 +9,14 @@
     </v-toolbar>
     <v-card-text>
       <v-form>
-        <v-alert
-          v-for="(error, index) in errorMessages.non_field_errors"
-          :key="index"
-          :value="true"
-          type="error"
-          >{{ error }}
-        </v-alert>
+        <v-snackbar
+          v-if="getLoginError"
+          :value="getLoginError.length"
+          color="red"
+          top
+          elevation="50"
+          >{{ getLoginError }}
+        </v-snackbar>
         <v-text-field
           ref="username"
           v-model="username"
@@ -23,7 +24,6 @@
           name="login"
           label="Email"
           type="text"
-          :error-messages="errorMessages.username"
           @keyup.enter="$refs.password.focus"
         ></v-text-field>
         <v-text-field
@@ -34,7 +34,6 @@
           name="password"
           label="Password"
           type="password"
-          :error-messages="errorMessages.password"
           @keyup.enter="loginUser"
         ></v-text-field>
       </v-form>
@@ -56,8 +55,14 @@ export default {
   }),
   methods: {
     async loginUser() {
+      this.$store.commit("setErrorLogin", null);
       const formData = { username: this.username, password: this.password };
       await this.$store.dispatch("login", formData);
+    },
+  },
+  computed: {
+    getLoginError() {
+      return this.$store.state.auth.error;
     },
   },
 };
