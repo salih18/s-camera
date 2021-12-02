@@ -1,6 +1,6 @@
 <template>
   <v-card class="elevation-3">
-    <v-toolbar light color="primary">
+    <v-toolbar light color="#FB8122">
       <v-toolbar-title
         elevation="0"
         class="toolbar-title white--text caption text-body-1 font-weight-medium px-5"
@@ -40,7 +40,7 @@
     </v-card-text>
     <v-card-actions>
       <v-spacer></v-spacer>
-      <v-btn elevation="0" color="primary" @click="loginUser">Sign In</v-btn>
+      <v-btn elevation="0" color="#1D2228" class="white--text" @click="loginUser">Sign In</v-btn>
     </v-card-actions>
   </v-card>
 </template>

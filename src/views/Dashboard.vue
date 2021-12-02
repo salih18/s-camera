@@ -1,10 +1,38 @@
 <template>
-  <v-app id="inspire">
-    <v-navigation-drawer v-model="drawer" app>
-      <!--  -->
+  <v-app id="inspire" light>
+    <v-navigation-drawer
+      v-model="drawer"
+      enable-resize-watcher
+      app
+      dark
+      color="#1D2228"
+    >
+      <div
+        class="d-flex justify-center align-center white"
+        style="padding: 14px 0"
+      >
+        <h2>S-Camera</h2>
+      </div>
+      <v-list dense class="pt-0">
+        <v-list-item-content>
+          <v-btn
+            elevation="0"
+            block
+            color="lighten-2"
+            dark
+            class="mt-5 transparent"
+            @click="logout"
+          >
+            Logout
+            <v-list-item-icon class="mx-2">
+              <v-icon>mdi-logout-variant</v-icon>
+            </v-list-item-icon>
+          </v-btn>
+        </v-list-item-content>
+      </v-list>
     </v-navigation-drawer>
 
-    <v-app-bar app>
+    <v-app-bar app color="#FB8122" elevation="0">
       <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
 
       <v-toolbar-title>Hi, {{ getFullName }}</v-toolbar-title>
@@ -41,7 +69,23 @@
 import Camera from "../components/camera/Camera.vue";
 
 export default {
-  data: () => ({ drawer: null }),
+  data: () => ({
+    drawer: true,
+    items: [
+      {
+        action: "local_activity",
+        title: "Attractions",
+        path: "/",
+        items: [],
+      },
+      {
+        action: "restaurant",
+        title: "Breakfast",
+        path: "/breakfast",
+        items: [],
+      },
+    ],
+  }),
   components: { Camera },
   created() {
     this.$store.dispatch("getAccountCameras");
