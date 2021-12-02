@@ -4,7 +4,7 @@ import store from "./../store";
 const api = axios.create({});
 
 api.interceptors.request.use((config) => {
-  const session = store.state.user.session;
+  const session = store.state.auth.session;
   if (session == null) {
     return config;
   }
@@ -22,11 +22,11 @@ api.interceptors.response.use(
       const API_KEY = process.env.VUE_APP_API_KEY;
       const API_SECRET = process.env.VUE_APP_API_SECRET;
       const encodedApiCredentials = btoa(`${API_KEY}:${API_SECRET}`);
-      const refreshToken = store.state.user.session?.refresh_token;
+      const refreshToken = store.state.auth.session?.refresh_token;
       error.config.headers["Authorization"] = `Basic ${encodedApiCredentials}`;
       const url = `https://rest.cameramanager.com/oauth/token?grant_type=refresh_token&scope=write&refresh_token=${refreshToken}`;
       const response = await axios.post(url);
-      store.commit("setSession", response.data);
+      store.commit("login", response.data);
       error.config.headers[
         "Authorization"
       ] = `Bearer ${response.data.access_token}`;

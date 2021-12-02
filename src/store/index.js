@@ -4,6 +4,7 @@ import router from "./../router";
 import createPersistedState from "vuex-persistedstate";
 import axios from "axios";
 import api from "./../helpers/api";
+import { offlineCameraImage, onlineCameraImage } from "../helpers/camera-utils";
 
 import SecureLS from "secure-ls";
 /* This library is used for encryption. In this project it is used 
@@ -17,8 +18,8 @@ const LOGIN_URL = `${process.env.VUE_APP_LOGIN_URL}?grant_type=password&scope=wr
 const API_KEY = process.env.VUE_APP_API_KEY;
 const API_SECRET = process.env.VUE_APP_API_SECRET;
 
-export default new Vuex.Store({
-  state: {
+const getDefaultState = () => {
+  return {
     auth: {
       session: null,
       isAuthenticated: false,
@@ -26,9 +27,16 @@ export default new Vuex.Store({
       error: null,
     },
     cameras: {
-      data: null,
+      all: Object.create(null),
+      snapshots: [],
+      ids: [],
+      loaded: false,
     },
-  },
+  };
+};
+
+export default new Vuex.Store({
+  state: getDefaultState(),
   mutations: {
     loadUser(state, payload) {
       state.auth = {
@@ -46,24 +54,30 @@ export default new Vuex.Store({
       };
     },
     logout(state) {
-      state.auth = {
-        session: null,
-        isAuthenticated: false,
-        user: null,
-        error: null,
-      };
-      state.cameras.data = null;
+      localStorage.removeItem("vuex");
+      Object.assign(state, getDefaultState());
+      router.push({ path: "login" });
     },
-    getAccountCameras(state, payload) {
-      state.cameras = {
-        data: payload,
+    getAccountCameras(state, { cameraStatuses, cameras }) {
+      const cameraState = {
+        ids: [],
+        all: Object.create(null),
+        snapshots: [],
+        loaded: true,
       };
+
+      cameras.forEach((camera, index) => {
+        cameraState.ids.push(camera.cameraId);
+        Vue.set(cameraState.all, camera.cameraId, {
+          ...camera,
+          ...cameraStatuses[index],
+        });
+      });
+
+      state.cameras = cameraState;
     },
     getAccountCameraSnapshot(state, payload) {
-      const camera = state.cameras.data.find(
-        (camera) => camera.cameraId === payload.cameraId
-      );
-      camera["snapshot"] = `data:image/jpeg;base64,${payload.snapshot}`;
+      state.cameras.snapshots = payload;
     },
     setErrorLogin(state, payload) {
       state.auth = {
@@ -104,35 +118,44 @@ export default new Vuex.Store({
         console.log("Error load user", error);
       }
     },
-    async getAccountCameras({ commit }) {
+    async getAccountCameras({ commit, dispatch }) {
       try {
         const cameras = await api.get(`${API_URL}/cameras`);
-        commit("getAccountCameras", cameras.data);
+        const cameraStatuses = await api.get(`${API_URL}/cameras/all/status`);
+        commit("getAccountCameras", {
+          cameras: cameras.data,
+          cameraStatuses: cameraStatuses.data,
+        });
+        await dispatch(
+          "getAccountCameraSnapshot",
+          cameras.data.map((c) => c.cameraId)
+        );
       } catch (error) {
-        console.log("Error getting account cameras", error);
+        if (error.response.data.code === 8) {
+          commit("setErrorLogin");
+        }
+        console.log("Error getting account cameras", { error });
       }
     },
-    async getAccountCameraSnapshot({ commit }, id) {
-      // https://rest.cameramanager.com/rest/v2.4/cameras/1841837/snapshot?resolution=1000x100
+    async getAccountCameraSnapshot({ commit }, ids) {
       try {
-        const snapshot = await api.get(
-          `${API_URL}/cameras/${id}/snapshot?resolution=1000x100`,
-          {
+        const promises = ids.map((id) =>
+          api.get(`${API_URL}/cameras/${id}/snapshot?resolution=1000x100`, {
             responseType: "arraybuffer",
+          })
+        );
+        const snapshots = await Promise.allSettled(promises);
+        const snapshotsData = snapshots.map((snapshot) => {
+          if (snapshot.status === "fulfilled") {
+            return onlineCameraImage(snapshot);
+          } else {
+            return offlineCameraImage;
           }
-        );
+        });
 
-        const payload = {
-          snapshot: Buffer.from(snapshot.data, "binary").toString("base64"),
-          cameraId: id,
-        };
-        console.log(
-          "🚀 ~ file: index.js ~ line 116 ~ getAccountCameraSnapshot ~ payload",
-          payload
-        );
-        commit("getAccountCameraSnapshot", payload);
+        commit("getAccountCameraSnapshot", snapshotsData);
       } catch (error) {
-        console.log("Error getting account cameras", error);
+        console.log("Error getting account camera snapshots", error);
       }
     },
   },
@@ -141,7 +164,15 @@ export default new Vuex.Store({
       return state.auth.session;
     },
     getAccountCameras(state) {
-      return state.cameras.data;
+      return state.cameras.ids.reduce((acc, id, index) => {
+        const camera = state.cameras.all[id];
+        let snapshot = state.cameras.snapshots[index];
+        if (!camera) {
+          throw Error("This camera not found");
+        }
+
+        return acc.concat({ ...camera, snapshot });
+      }, []);
     },
   },
   plugins: [
