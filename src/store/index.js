@@ -62,7 +62,7 @@ export default new Vuex.Store({
       const cameraState = {
         ids: [],
         all: Object.create(null),
-        snapshots: [],
+        snapshots: Object.create(null),
         loaded: true,
       };
 
@@ -76,8 +76,12 @@ export default new Vuex.Store({
 
       state.cameras = cameraState;
     },
-    getAccountCameraSnapshot(state, payload) {
-      state.cameras.snapshots = payload;
+    getAccountCameraSnapshot(state, { snapshots, ids }) {
+      // state.cameras.snapshots = payload;
+
+      ids.forEach((id, index) => {
+        Vue.set(state.cameras.snapshots, id, snapshots[index]);
+      });
     },
     setErrorLogin(state, payload) {
       state.auth = {
@@ -153,7 +157,7 @@ export default new Vuex.Store({
           }
         });
 
-        commit("getAccountCameraSnapshot", snapshotsData);
+        commit("getAccountCameraSnapshot", { snapshots: snapshotsData, ids });
       } catch (error) {
         console.log("Error getting account camera snapshots", error);
       }
@@ -164,9 +168,9 @@ export default new Vuex.Store({
       return state.auth.session;
     },
     getAccountCameras(state) {
-      return state.cameras.ids.reduce((acc, id, index) => {
+      return state.cameras.ids.reduce((acc, id) => {
         const camera = state.cameras.all[id];
-        let snapshot = state.cameras.snapshots[index];
+        const snapshot = state.cameras.snapshots[id];
         if (!camera) {
           throw Error("This camera not found");
         }

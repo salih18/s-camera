@@ -1,5 +1,9 @@
 <template>
-  <v-card class="ma-2" max-width="300">
+  <v-card
+    class="ma-2"
+    max-width="300"
+    :to="{ name: 'CameraPage', params: { id: camera.cameraId } }"
+  >
     <v-img
       class="white--text align-end"
       height="300px"
@@ -31,6 +35,7 @@
 <script>
 export default {
   name: "Camera",
+
   props: {
     camera: {
       type: Object,

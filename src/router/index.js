@@ -26,6 +26,14 @@ const routes = [
     name: "Login",
     component: Login,
   },
+  {
+    path: "/camera/:id",
+    name: "CameraPage",
+    component: () => import("../views/Camera.vue"),
+    meta: {
+      requiresAuth: true,
+    },
+  },
 ];
 
 const router = new VueRouter({
