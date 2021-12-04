@@ -28,7 +28,7 @@ const getDefaultState = () => {
     },
     cameras: {
       all: Object.create(null),
-      snapshots: [],
+      snapshots: Object.create(null),
       ids: [],
       loaded: false,
     },
