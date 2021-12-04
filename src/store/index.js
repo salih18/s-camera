@@ -56,7 +56,7 @@ export default new Vuex.Store({
     logout(state) {
       localStorage.removeItem("vuex");
       Object.assign(state, getDefaultState());
-      router.push({ path: "login" });
+      router.push({ path: "/" });
     },
     getAccountCameras(state, { cameraStatuses, cameras }) {
       const cameraState = {
@@ -77,8 +77,6 @@ export default new Vuex.Store({
       state.cameras = cameraState;
     },
     getAccountCameraSnapshot(state, { snapshots, ids }) {
-      // state.cameras.snapshots = payload;
-
       ids.forEach((id, index) => {
         Vue.set(state.cameras.snapshots, id, snapshots[index]);
       });
